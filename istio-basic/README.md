@@ -24,21 +24,21 @@ kubectl label namespace default istio-injection=enabled
 kubectl describe namespace default
 ~~~
 
-[!istio auto injection](./images/istio-basic-1.png)
+![istio auto injection](./images/istio-basic-1.png)
 
 4. 이제 간단하게 예제 애플리케이션을 배포 가능
 ~~~
 kubectl apply -f [bookinfo.yaml](./bookinfo/bookinfo.yaml)
 ~~~
-[!istio deploy bookinfo](./images/istio-basic-2.png)
+![istio deploy bookinfo](./images/istio-basic-2.png)
 
 5. 배포된 애플리케이션과 서비스 확인
 ~~~
 kubectl get pods
 kubectl get services
 ~~~
-[!istio deploy bookinfo](./images/istio-basic-3.png)
-[!istio deploy bookinfo](./images/istio-basic-4.png)
+![istio deploy bookinfo](./images/istio-basic-3.png)
+![istio deploy bookinfo](./images/istio-basic-4.png)
 
 
 
