@@ -100,6 +100,13 @@ export ISTIO_VERSION=1.0.4
 curl -L https://git.io/getLatestIstio | sh -
 ~~~
 
+istioctl 설치됨을 확인
+~~~
+istioctl version
+~~~
+
+![istio kiali 2](./images/istio-setup-10.png)
+
 2-2. Istio 폴더로 이동
 ~~~
 cd istio-1.0.2
