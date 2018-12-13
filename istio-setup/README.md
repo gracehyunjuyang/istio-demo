@@ -109,6 +109,6 @@ istioctl version
 
 2-2. Istio 폴더로 이동
 ~~~
-cd istio-1.0.2
+cd istio-1.0.4
 export PATH=$PWD/bin:$PATH
 ~~~
