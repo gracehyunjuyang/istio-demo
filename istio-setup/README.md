@@ -105,7 +105,7 @@ istioctl 설치됨을 확인
 istioctl version
 ~~~
 
-![istio kiali 2](./images/istio-setup-10.png)
+![istioctl version](./images/istio-setup-10.png)
 
 2-2. Istio 폴더로 이동
 ~~~
