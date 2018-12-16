@@ -239,4 +239,51 @@ kubectl replace -f reviews-virtualservice.yaml
   ![routing-user4](./images/istio-basic-22.png)  
 
 
+### 3-4. Request Timeouts
+이번에는 Istio를 사용해 Envoy 에서 요청에 대한 Timeout을 설정해 보겠습니다.
+
+http 요청에 대한 타임아웃은 `router rule` 의 _timeout_ 필트에서 명시할 수 있습니다.
+디폴트로, timeout은 15초이나 본 예제에서는 `reviews` 서비스 호출시 2초의
+![routing-user4](./images/istio-basic-23.png)  
+
+
+[Istio Request Timeout 참고 링크](https://istio.io/docs/tasks/traffic-management/request-timeouts/)
+
+
+### 3-5. Fault Injection
+[Istio Fault Injection 참고 링크](https://istio.io/docs/tasks/traffic-management/request-timeouts/)
+
+특정 사용자 Jason 에게 `reviews` 서비스를 501 상태로 표시해 보겠습니다.
+
+1. VirtualService 에서 `abort`값을 입력 (delay 값 대신)
+![abort1](./images/istio-basic-25.png)
+```
+kind: VirtualService
+metadata:
+  name: reviews-virtualservice
+spec:
+  hosts:
+  - reviews
+  http:
+  - match:
+    - headers:
+        end-user:
+          exact: jason
+    fault:
+      abort:
+        percent: 100
+        httpStatus: 501
+    route:
+    - destination:
+        host: reviews
+        subset: v3
+  - route:
+    - destination:
+        host: reviews
+        subset: v2
+```
+2.`jason`으로 로그인 한 상태에서 reviews 서비스가 501 상태로 호출되지 않음을 확인
+![abort-2](./images/istio-basic-24.png)
+
+
 Circuit Breaker
