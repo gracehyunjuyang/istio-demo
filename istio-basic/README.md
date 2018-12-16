@@ -59,15 +59,17 @@ kubectl get services
 ![istio deploy bookinfo](./images/istio-basic-8.png)
 
 
-## 2. Bookinfo 애플리케이션 접속하기
+## 2. Bookinfo 애플리케이션 접속하기 - Gateway, VirtualService 정의
 이제 Bookinfo 서비스가 실행 되고 있습니다.
 애플리케이션을 Kubernetes 클러스터 외부에서 접속하도록 하기 위해서는 **Istio Gateway** 를 사용해야 합니다.
 
-1. 배포한 애플리케이션에 대한 ingress gateway를 정의
-[bookinfo-gateway.yaml](https://raw.githubusercontent.com/istio/istio/release-1.0/samples/bookinfo/networking/bookinfo-gateway.yaml)
+1. 배포한 애플리케이션에 대한 ingress gateway를 정의   
+[bookinfo-gateway.yaml](./bookinfo/bookinfo-gateway.yaml)  
+[bookinfo-virtualservice.yaml](./bookinfo/bookinfo-virtualservice.yaml)
 
-```
+  ```
 kubectl apply -f bookinfo-gateway.yaml
+kubectl apply -f bookinfo-virtualservice.yaml
 ```
 
 2. `gateway` 와 `Virtual Service`가 생성되었음을 확인
@@ -110,7 +112,131 @@ http://10.10.80.177:31380 가 접속 URL 입니다.
 ![access app](./images/istio-basic-11.png)
 ![access app](./images/istio-basic-12.png)
 
-## 3. Istio Traffic Management
+## 3. Bookinfo 트래픽 관리
+
+### 3-1. Destination rule 정의
+Istio로 Bookinfo 버전을 제어하기 위해서는 먼저 버전을 _subset_ 이라고 부르는 `destination rules`에 정의 해야 합니다.
+Bookinfo services에 대한 디폴트 `destination rules`을 정의하기 위해 아래의 명령어를 실행합니다.
+
+```
+kubectl apply -f reviews-dest-rules.yaml
+```
+
+### 3-2. Traffic Routing
+이제 트래픽 라우팅에 대한 규칙을 정의해 봅니다.
+
+먼저, `productpage`에서 `reviews-v1`만 호출하는 서비스 규칙을 정의합니다.
+
+1. `VirtualService`에 호출 서비스 버전 (subset)을 v1 으로 정의
+
+```
+apiVersion: networking.istio.io/v1alpha3 kind: VirtualService
+metadata:
+  name: reviews-virtualservice
+spec:
+  hosts:
+  - reviews
+  http:
+  - route:
+    - destination:
+        host: reviews
+        subset: v1
+```
+
+```
+kubectl apply -f reviews-virtualservice.yaml
+```
+
+2. productpage 를 웹 브라우저 상에서 여러번 호출해도 reviews 에 별표시가 없는 v1 만 호출됨을 확인
+![reviews-v1](./images/istio-basic-13.png)
+
+3. v2 만 호출하도록 규칙 수정
+`subset`필드 값을 `v1`에서 `v2`로 수정 후 업데이트
+```
+vi reviews-virtualservice.yaml
+```
+![reviews-v2](./images/istio-basic-14.png)
+```
+kubectl replace -f reviews-virtualservice.yaml
+```  
+다시 브라우저 상에서 화면을 새로고침 하면 이제 검정색 별이 있는 v2 서비스만 호출됨을 확인
+![reviews-v2-screen](./images/istio-basic-15.png)
+
+### 3-3. Traffic Splitting
+이제 서비스 호출시 Traffic Splitting을 수행하도록 규칙 정의를 변경해 보겠습니다. 요청의 50%는 `reviews-v2` 로, 나머지 50%는 `reviews-v3`로 나뉘도록 합니다.
+1. `Virtual Service` 에 두 개의 destination과 비율을 지정
+```
+vi reviews-virtualservice.yaml
+```
+```
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: reviews-virtualservice
+spec:
+  hosts:
+  - reviews
+  http:
+  - route:
+    - destination:
+        host: reviews
+        subset: v2
+      weight: 50
+    - destination:
+        host: reviews
+        subset: v3
+      weight: 50
+```
+```
+kubectl replace -f reviews-virtualservice.yaml
+```
+2. 브라우저에서 여러번 새로고침 하여 v2 와 v3 로 라우팅 되는 비율 확인
+
+![traffic-split-v2](./images/istio-basic-17.png)
+![traffic-split-v3](./images/istio-basic-18.png)
+
+### 3-4. 사용자 기반 Traffic steering
+특정 사용자 (jason) 으로 로그인시 `reviews-v3`서비스로, 그렇지 않으면 `reviews-v2` 서비스로 라우팅 되도록 트래픽 규칙을 정의합니다.
+
+1. Virtual Service 정의 수정
+```
+vi reviews-virtualservice.yaml
+```
+```
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: reviews-virtualservice
+spec:
+  hosts:
+  - reviews
+  http:
+  - match:
+    - headers:
+        end-user:
+          exact: jason
+    route:
+    - destination:
+        host: reviews
+        subset: v3
+  - route:
+    - destination:
+        host: reviews
+        subset: v2
+```
+
+2.  VirtualService 업데이트
+```
+kubectl replace -f reviews-virtualservice.yaml
+```
+![routing-user](./images/istio-basic-19.png)
+
+3. 브라우저에서 새로고침 후 검은색 별 (v2)이 나타남을 확인 후, `jason`으로 로그인하여 v3 서비스가 호출됨을 확인
+![routing-user2](./images/istio-basic-20.png)
+
+  ![routing-user3](./images/istio-basic-21.png)  
+
+  ![routing-user4](./images/istio-basic-22.png)  
 
 
 Circuit Breaker
