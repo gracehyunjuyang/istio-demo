@@ -287,12 +287,3 @@ spec:
 
 
 cheatsheet : [reviews-virtualservice-fault.yaml](./bookinfo/reviews-virtualservice-fault.yaml)
-
-
------------------------
-Tobe updated
-
-3. Fault Injection 규칙 모두 제거 및 초기화
-`reviews-vs.yaml` 파일에 있는 모든 fault injection을 제거합니다.
-사용자 `jason`에 대해 `v2`subset으로 traffic steering 되도록 설정합니다.
-Circuit Breaker
