@@ -187,7 +187,7 @@ vi reviews-virtualservice.yaml
 kubectl replace -f reviews-virtualservice.yaml
 ```
 
-cheatsheet : [reviews-virtualservice-split.yaml](./bookinfo/reviews-virtualservice-split.yaml)
+cheatsheet : [reviews-virtualservice-split.yaml](./bookinfo/cheatsheet/reviews-virtualservice-split.yaml)
 
 2. 브라우저에서 여러번 새로고침 하여 v2 와 v3 로 라우팅 되는 비율 확인
 
@@ -223,7 +223,7 @@ spec:
         host: reviews
         subset: v2
 ```
-cheatsheet : [reviews-virtualservice-user.yaml](./bookinfo/reviews-virtualservice-user.yaml)  
+cheatsheet : [reviews-virtualservice-user.yaml](./bookinfo/cheatsheet/reviews-virtualservice-user.yaml)  
 
 2.  VirtualService 업데이트
 ```
@@ -286,4 +286,4 @@ spec:
 ![abort-2](./images/istio-basic-24.png)
 
 
-cheatsheet : [reviews-virtualservice-fault.yaml](./bookinfo/reviews-virtualservice-fault.yaml)
+cheatsheet : [reviews-virtualservice-fault.yaml](./bookinfo/cheatsheet/reviews-virtualservice-fault.yaml)
