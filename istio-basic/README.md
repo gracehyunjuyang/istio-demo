@@ -6,9 +6,8 @@
 
 ![bookinfo arch](./images/istio-basic-0.png)
 
-
 ## 1. Istio sidecar 주입 (injection) 설정
-배포되는 애플리케이션 컨테이너를 istio service mesh 에서 관리 하도록 하기 위해서는 sidecar를 주입해야 하는데,
+배포되는 애플리케이션 컨테이너를 istio service mesh 에서 관리 하도록 하기 위해서는 `poxy sidecar(Envoy)`를 주입해야 하는데,
 sidecar는 아래 두가지 방법으로 배포가 가능합니다.
 
 * 수동 주입 - 애플리케이션 컨테이너 배포시 sidecar를 함께 배포
@@ -23,19 +22,19 @@ kubectl describe namespace default
 
 2. `default` namespace에 `istio-injection=enabled` 값 설정
 ~~~
-kubectl label namespace default istio-injection=enabled
+kubectl label namespace $NAMESPACE istio-injection=enabled
 ~~~
 
 3. label이 반영된 namespace 정보 확인
 ~~~
-kubectl describe namespace default
+kubectl describe $NAMESPACE default
 ~~~
-
 ![istio auto injection](./images/istio-basic-1.png)
 
-4. 이제 간단하게 예제 애플리케이션을 배포 가능
+4. 이제 간단하게 예제 애플리케이션을 배포 가능  
+[bookinfo.yaml](./bookinfo/bookinfo.yaml)  
 ~~~
-kubectl apply -f [bookinfo.yaml](./bookinfo/bookinfo.yaml)
+kubectl apply -f bookinfo.yaml -n $NAMESPACE
 ~~~
 ![istio deploy bookinfo](./images/istio-basic-2.png)
 
@@ -94,7 +93,7 @@ echo $INGRESS_PORT
 export GATEWAY_URL=$INGRESS_HOST:$INGRESS_PORT
 echo $GATEWAY_URL
 ```
-저의 경우, http://<proxynode-ip>:31380 로,
+저의 경우, http://proxynode-ip:31380 로,
 http://10.10.80.177:31380 가 접속 URL 입니다.  
 
   애플리케이션 실행 여부를 확인하기 위해 아래와 같이 curl 명령어를 실행합니다.
@@ -112,10 +111,12 @@ http://10.10.80.177:31380 가 접속 URL 입니다.
 ![access app](./images/istio-basic-11.png)
 ![access app](./images/istio-basic-12.png)
 
+
 ## 3. Bookinfo 트래픽 관리
 
 ### 3-1. Destination rule 정의
-Istio로 Bookinfo 버전을 제어하기 위해서는 먼저 버전을 _subset_ 이라고 부르는 `destination rules`에 정의 해야 합니다.
+Istio로 Bookinfo 버전을 제어하기 위해서는 먼저 사용할 서비스 버전을 _subset_ 으로 정의 해야 합니다. (`destination rules`에 정의)  
+
 Bookinfo services에 대한 디폴트 `destination rules`을 정의하기 위해 아래의 명령어를 실행합니다.
 
 ```
@@ -169,11 +170,6 @@ kubectl replace -f reviews-virtualservice.yaml
 vi reviews-virtualservice.yaml
 ```
 ```
-apiVersion: networking.istio.io/v1alpha3
-kind: VirtualService
-metadata:
-  name: reviews-virtualservice
-spec:
   hosts:
   - reviews
   http:
@@ -181,15 +177,18 @@ spec:
     - destination:
         host: reviews
         subset: v2
-      weight: 50
+      weight: 75
     - destination:
         host: reviews
         subset: v3
-      weight: 50
+      weight: 25
 ```
 ```
 kubectl replace -f reviews-virtualservice.yaml
 ```
+
+cheatsheet : [reviews-virtualservice-split.yaml](./bookinfo/reviews-virtualservice-split.yaml)
+
 2. 브라우저에서 여러번 새로고침 하여 v2 와 v3 로 라우팅 되는 비율 확인
 
 ![traffic-split-v2](./images/istio-basic-17.png)
@@ -224,6 +223,7 @@ spec:
         host: reviews
         subset: v2
 ```
+cheatsheet : [reviews-virtualservice-user.yaml](./bookinfo/reviews-virtualservice-user.yaml)  
 
 2.  VirtualService 업데이트
 ```
@@ -282,8 +282,17 @@ spec:
         host: reviews
         subset: v2
 ```
-2.`jason`으로 로그인 한 상태에서 reviews 서비스가 501 상태로 호출되지 않음을 확인
+2. `jason`으로 로그인 한 상태에서 reviews 서비스가 501 상태를 반환함을 확인
 ![abort-2](./images/istio-basic-24.png)
 
 
+cheatsheet : [reviews-virtualservice-fault.yaml](./bookinfo/reviews-virtualservice-fault.yaml)
+
+
+-----------------------
+Tobe updated
+
+3. Fault Injection 규칙 모두 제거 및 초기화
+`reviews-vs.yaml` 파일에 있는 모든 fault injection을 제거합니다.
+사용자 `jason`에 대해 `v2`subset으로 traffic steering 되도록 설정합니다.
 Circuit Breaker
